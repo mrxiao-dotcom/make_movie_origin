@@ -1,7 +1,6 @@
 import  文本转语音Cosyvoice
 
 from 助手 import *
-from 文字转语音Baidu import *
 
 
 ai_model_voice = "local" #如果服务器种子用完了，采用本地
