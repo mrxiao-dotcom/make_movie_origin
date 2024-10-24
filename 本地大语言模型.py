@@ -46,5 +46,5 @@ def get_message_from_ai(content,role='你是一个文案处理专家.'):
     return ret
 
 if __name__ == '__main__':
-    ret = get_message_from_ai("中国的首都是哪里")
+    ret = get_message_from_ai("上海机场的地址")
     print(ret)

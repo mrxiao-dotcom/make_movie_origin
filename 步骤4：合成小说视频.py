@@ -1,16 +1,13 @@
 import os.path
-
-from Cython.Shadow import returns
-
+import subprocess
 from 助手 import *
 from moviepy.editor import AudioFileClip, VideoFileClip
 
-from 批量修改图片的名字 import original_files
 
 分镜序号 = 0
 片段列表 = 列表()
 分镜文档 = '文档集合/分镜.txt'
-MAX_THREADS = 100
+MAX_THREADS = 200
 # 创建一个线程列表
 threads = []
 
@@ -24,6 +21,45 @@ def save_movie(片段,路径):
     else:
         print(f"目录已存在：{directory}")
     片段.保存(路径)
+
+
+def copy_and_rename_files(src_dir, dst_dir):
+    """
+    复制文件从 src_dir 到 dst_dir，并重命名文件，只保留“-”之前的数字部分和后缀。
+
+    参数:
+    src_dir -- 源目录路径。
+    dst_dir -- 目标目录路径。
+    """
+    # 确保目标目录存在
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+
+    # 遍历源目录中的所有文件
+    for filename in os.listdir(src_dir):
+        # 构建完整的文件路径
+        src_file = os.path.join(src_dir, filename)
+
+        # 检查是否为文件
+        if os.path.isfile(src_file):
+            # 分离文件名和扩展名
+            name, ext = os.path.splitext(filename)
+
+            # 使用正则表达式匹配“-”之前的数字部分
+            match = re.match(r'(\d+)', name)
+            if match:
+                # 只保留匹配到的数字和后缀
+                new_name = match.group(1) + ext
+
+                # 构建目标文件路径
+                dst_file = os.path.join(dst_dir, new_name)
+
+                # 复制文件并重命名
+                shutil.copy2(src_file, dst_file)
+                print(f"文件 {filename} 已复制并重命名为 {new_name}")
+            else:
+                print(f"文件 {filename} 的命名不符合要求，已跳过。")
+
 
 def adjust_audio_to_match_video(video_clip, audio_clip):
     # 加载视频文件
@@ -54,6 +90,29 @@ def adjust_audio_to_match_video(video_clip, audio_clip):
     # 返回处理后的音频对象
     return audio_clip
 
+
+
+
+def concatenate_segments(segment_paths, output_path):
+
+    # Here we use ffmpeg command line directly, because moviepy's concatenate_videoclips method creates audio artifacts when combining clips
+
+    with open('clip_paths.txt', 'w',encoding='gbk') as file:
+        for path in segment_paths:
+            file.write(f"file 'output/{path}'\n")
+    ffmpeg_command = [
+        "ffmpeg",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", "clip_paths.txt",
+        "-c", "copy",
+        output_path
+    ]
+    #result = subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(ffmpeg_command,input=b'y\n')
+    if result.returncode != 0:
+        raise Exception(f"Video concatenation failed. Error: {result.stderr}")
+
 #为了加快视频合成，多线程管理，加入临时视频目录，存放中间视频
 #delete_files_in_directory("临时视频")
 
@@ -76,7 +135,7 @@ for 分镜 in 阅读分镜文档(分镜文档):
     纯图片名 = f'{分镜序号}-{标题}'
 
     临时视频文件路径 = f'临时视频/{纯图片名}.mp4'
-    临时视频列表.添加(临时视频文件路径)
+    临时视频列表.添加(f'{分镜序号}.mp4')
 
     if 是否存在(临时视频文件路径):
         分镜序号 += 1
@@ -162,29 +221,22 @@ if os.path.exists("输出视频(静态).mp4"):
     print("已经存在目标视频，如果需要重新生成，请删除","输出视频(静态).mp4")
 else:
 
-    videoclips = []
+    copy_and_rename_files("临时视频","output")
 
-    for scene in 临时视频列表:
-        videoclips.append(VideoFileClip(scene))
+    concatenate_segments(临时视频列表, "final.mp4")
 
-
-
-    final_clip = concatenate_videoclips(videoclips,method="chain")
-
-    video_clip = final_clip
+    print("合并视频，并进行音频处置")
+    video_clip = VideoFileClip("final.mp4")
     audio_clip = AudioFileClip(全局配置.背景音乐)
     #处理音频时长
     final_audio = adjust_audio_to_match_video(video_clip,audio_clip)
-    final_audio = final_audio.volumex(0.4)
-    origin_audio = video_clip.audio
+    final_audio = final_audio.volumex(0.1)
+    origin_audio = VideoFileClip("final.mp4").audio
     origin_audio = origin_audio.volumex(1.2)
-
-    #final_clip = video_clip.set_audio(origin_audio.volumex(1.1))
-    #final_clip = video_clip.set_audio(final_audio)
 
     # 混合原视频音频和背景音乐音频
     mixed_audio = CompositeAudioClip([origin_audio,final_audio])
-    final_clip = final_clip.set_audio(mixed_audio)
+    final_clip = VideoFileClip("final.mp4").set_audio(mixed_audio)
     print("开始进行视频多线程保存...需要一定时间，请稍后")
     final_clip.write_videofile('输出视频(静态).mp4',
                                     threads=10,

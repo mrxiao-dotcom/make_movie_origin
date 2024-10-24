@@ -1,6 +1,9 @@
 import  文本转语音Cosyvoice
-
+import librosa
+import numpy as np
 from 助手 import *
+
+
 
 
 ai_model_voice = "local" #如果服务器种子用完了，采用本地
