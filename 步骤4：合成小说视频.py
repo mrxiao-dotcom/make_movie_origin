@@ -91,7 +91,32 @@ def adjust_audio_to_match_video(video_clip, audio_clip):
     return audio_clip
 
 
+def add_background_music(video_path, audio_path, output_path):
+    """
+    Add background music to a video file using FFmpeg, while preserving the original audio.
 
+    Parameters:
+    video_path (str): Path to the video file.
+    audio_path (str): Path to the AAC audio file to be added as background music.
+    output_path (str): Path where the new video file with background music will be saved.
+    """
+    # 构建FFmpeg命令
+    command = [
+        'ffmpeg',
+        '-i', video_path,               # 输入视频文件
+        '-i', audio_path,               # 输入背景音乐文件
+        '-filter_complex',              # 使用复杂过滤器图
+        '[0:a] [1:a] amix=inputs=2:duration=first [a]',  # 混合两个音频流
+        '-map', '0:v',                   # 选择第一个输入的视频流
+        '-map', '[a]',                   # 选择混合后的音频流
+        '-c:v', 'copy',                  # 复制视频流
+        '-c:a', 'aac',                   # 使用AAC编码音频
+        '-strict', 'experimental',       # 某些FFmpeg版本需要这个选项来使用AAC
+        output_path                     # 输出文件路径
+    ]
+
+    # 调用FFmpeg命令
+    subprocess.run(command, check=True)
 
 def concatenate_segments(segment_paths, output_path):
 
@@ -217,13 +242,16 @@ for t in threads:
     t.join()
 
 
-if os.path.exists("输出视频(静态).mp4"):
-    print("已经存在目标视频，如果需要重新生成，请删除","输出视频(静态).mp4")
+output_path = "输出视频(静态).mp4"
+video_path = 'final.mp4'
+audio_path = 'output_file.aac'
+if os.path.exists(output_path):
+    print("已经存在目标视频，如果需要重新生成，请删除",output_path)
 else:
 
     copy_and_rename_files("临时视频","output")
-
-    concatenate_segments(临时视频列表, "final.mp4")
+    if not os.path.exists(video_path):
+        concatenate_segments(临时视频列表, "final.mp4")
 
     print("合并视频，并进行音频处置")
     video_clip = VideoFileClip("final.mp4")
@@ -231,6 +259,13 @@ else:
     #处理音频时长
     final_audio = adjust_audio_to_match_video(video_clip,audio_clip)
     final_audio = final_audio.volumex(0.1)
+    final_audio_filepath = audio_path
+    final_audio.write_audiofile(final_audio_filepath, codec='aac')
+
+    # 使用示例
+    add_background_music(video_path, audio_path, output_path)
+
+    """
     origin_audio = VideoFileClip("final.mp4").audio
     origin_audio = origin_audio.volumex(1.2)
 
@@ -243,4 +278,4 @@ else:
                                    logger=None,
                                    audio_codec="aac",
                                    fps=30)
-
+    """

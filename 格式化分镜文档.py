@@ -8,9 +8,15 @@ if __name__ == '__main__':
 
     format_and_save_json_file(input_file_path)
 
-
-
+    """
+    effects_folder = r'特效'  # 请替换为实际的特效文件夹路径
+    input_file_path = '文档集合/分镜.txt'  # 请替换为实际的原始文件路径
+    output_file_path = '文档集合/分镜.txt'  # 请替换为实际的目标文件路径
+    json_data = load_json(output_file_path)
+    updated_json_data = validate_and_update_effects(json_data, effects_folder, 0)
+    save_json(updated_json_data, output_file_path)
     print("分镜文件已更新。")
+    """
 
 """
 

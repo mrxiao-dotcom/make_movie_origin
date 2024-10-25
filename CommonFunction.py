@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import re
+import random
 
 
 def print_key_value_pairs_from_file(file_path):
@@ -378,12 +379,13 @@ def validate_and_update_effects(json_data, effects_folder, empty=0):
         # 检查特效文件是否存在于文件夹中
         if effect_file not in effect_files:
 
-            texiao = random.choice(effect_list)
+
             if empty == 0: #这个标识如果等于0，那么不要特效，否则随机指派特效
                 item['特效'] = ""
             else:
+                texiao = random.choice(effect_list)
                 item['特效'] = texiao
-            print("特效：%s"%texiao)
+                print("特效：%s"%texiao)
 
     return json_data
 
@@ -487,6 +489,9 @@ def format_and_save_json_file(file_path):
 
         # 替换 "]," 为 "],\n" 并添加换行符
         formatted_str = json_str.replace("][", ",\n")
+        formatted_str = formatted_str.replace("']", "")
+        formatted_str = formatted_str.replace("['", "")
+        formatted_str = formatted_str.replace("'", "\"")
 
         # 将格式化后的内容写回原文件
         with open(file_path, 'w', encoding='utf-8') as file:
