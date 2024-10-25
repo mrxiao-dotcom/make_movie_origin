@@ -265,17 +265,3 @@ else:
     # 使用示例
     add_background_music(video_path, audio_path, output_path)
 
-    """
-    origin_audio = VideoFileClip("final.mp4").audio
-    origin_audio = origin_audio.volumex(1.2)
-
-    # 混合原视频音频和背景音乐音频
-    mixed_audio = CompositeAudioClip([origin_audio,final_audio])
-    final_clip = VideoFileClip("final.mp4").set_audio(mixed_audio)
-    print("开始进行视频多线程保存...需要一定时间，请稍后")
-    final_clip.write_videofile('输出视频(静态).mp4',
-                                    threads=10,
-                                   logger=None,
-                                   audio_codec="aac",
-                                   fps=30)
-    """
