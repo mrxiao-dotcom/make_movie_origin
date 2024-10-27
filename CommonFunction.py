@@ -267,7 +267,7 @@ def format_json_file(file_path):
 def extract_sentences(text):
     # 使用正则表达式匹配句子，包括中英文的句号、感叹号、问号和换行符
     # 同时确保这些符号不在引号内
-    sentences = re.split(r'(?<![\'"])[。？！；：\n]', text)
+    sentences = re.split(r'(?<![\'"])[。？！；\n]', text)
 
     # 定义一个空列表来存储清洗后的句子
     cleaned_sentences = []
